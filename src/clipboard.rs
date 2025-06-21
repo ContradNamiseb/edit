@@ -1,12 +1,14 @@
 //! Clipboard facilities for the editor.
 
+use crate::collections::*;
+
 /// The builtin, internal clipboard of the editor.
 ///
 /// This is useful particularly when the terminal doesn't support
 /// OSC 52 or when the clipboard contents are huge (e.g. 1GiB).
 #[derive(Default)]
 pub struct Clipboard {
-    data: Vec<u8>,
+    data: MeVec<u8>,
     line_copy: bool,
     wants_host_sync: bool,
 }
@@ -38,7 +40,7 @@ impl Clipboard {
     }
 
     /// Fill the clipboard with the given data.
-    pub fn write(&mut self, data: Vec<u8>) {
+    pub fn write(&mut self, data: MeVec<u8>) {
         if !data.is_empty() {
             self.data = data;
             self.line_copy = false;

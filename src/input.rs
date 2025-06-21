@@ -8,6 +8,7 @@
 
 use std::mem;
 
+use crate::collections::*;
 use crate::helpers::{CoordType, Point, Size};
 use crate::vt;
 
@@ -256,7 +257,7 @@ pub enum Input<'input> {
     /// Note that [`Input::Keyboard`] events can also be text.
     Text(&'input str),
     /// A clipboard paste.
-    Paste(Vec<u8>),
+    Paste(MeVec<u8>),
     /// Keyboard input.
     Keyboard(InputKey),
     /// Mouse input.
@@ -266,7 +267,7 @@ pub enum Input<'input> {
 /// Parses VT sequences into input events.
 pub struct Parser {
     bracketed_paste: bool,
-    bracketed_paste_buf: Vec<u8>,
+    bracketed_paste_buf: MeVec<u8>,
     x10_mouse_want: bool,
     x10_mouse_buf: [u8; 3],
     x10_mouse_len: usize,
@@ -279,7 +280,7 @@ impl Parser {
     pub fn new() -> Self {
         Self {
             bracketed_paste: false,
-            bracketed_paste_buf: Vec::new(),
+            bracketed_paste_buf: Default::default(),
             x10_mouse_want: false,
             x10_mouse_buf: [0; 3],
             x10_mouse_len: 0,

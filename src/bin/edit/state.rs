@@ -6,6 +6,7 @@ use std::ffi::{OsStr, OsString};
 use std::mem;
 use std::path::{Path, PathBuf};
 
+use edit::collections::*;
 use edit::framebuffer::IndexedColor;
 use edit::helpers::*;
 use edit::tui::*;
@@ -135,9 +136,9 @@ pub struct State {
     pub file_picker_pending_dir: DisplayablePathBuf,
     pub file_picker_pending_dir_revision: u64, // Bumped every time `file_picker_pending_dir` changes.
     pub file_picker_pending_name: PathBuf,
-    pub file_picker_entries: Option<[Vec<DisplayablePathBuf>; 3]>, // ["..", directories, files]
-    pub file_picker_overwrite_warning: Option<PathBuf>,            // The path the warning is about.
-    pub file_picker_autocomplete: Vec<DisplayablePathBuf>,
+    pub file_picker_entries: Option<[MeVec<DisplayablePathBuf>; 3]>, // ["..", directories, files]
+    pub file_picker_overwrite_warning: Option<PathBuf>, // The path the warning is about.
+    pub file_picker_autocomplete: MeVec<DisplayablePathBuf>,
 
     pub wants_search: StateSearch,
     pub search_needle: String,
@@ -148,7 +149,7 @@ pub struct State {
     pub wants_encoding_picker: bool,
     pub wants_encoding_change: StateEncodingChange,
     pub encoding_picker_needle: String,
-    pub encoding_picker_results: Option<Vec<icu::Encoding>>,
+    pub encoding_picker_results: Option<MeVec<icu::Encoding>>,
 
     pub wants_save: bool,
     pub wants_statusbar_focus: bool,
@@ -185,7 +186,7 @@ impl State {
             file_picker_pending_name: Default::default(),
             file_picker_entries: None,
             file_picker_overwrite_warning: None,
-            file_picker_autocomplete: Vec::new(),
+            file_picker_autocomplete: Default::default(),
 
             wants_search: StateSearch { kind: StateSearchKind::Hidden, focus: false },
             search_needle: Default::default(),

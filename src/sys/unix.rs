@@ -585,7 +585,7 @@ where
     }
 }
 
-pub fn preferred_languages(arena: &Arena) -> Vec<ArenaString<'_>, &Arena> {
+pub fn preferred_languages(arena: &Arena) -> MeVec<ArenaString<'_>, &Arena> {
     let mut locales = Vec::new_in(arena);
 
     for key in ["LANGUAGE", "LC_ALL", "LANG"] {

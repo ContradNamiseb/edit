@@ -147,12 +147,14 @@ use std::arch::breakpoint;
 #[cfg(debug_assertions)]
 use std::collections::HashSet;
 use std::fmt::Write as _;
+use std::ops::{Deref, DerefMut};
 use std::{iter, mem, ptr, time};
 
 use crate::arena::{Arena, ArenaString, scratch_arena};
 use crate::buffer::{CursorMovement, MoveLineDirection, RcTextBuffer, TextBuffer, TextBufferCell};
 use crate::cell::*;
 use crate::clipboard::Clipboard;
+use crate::collections::*;
 use crate::document::WriteableDocument;
 use crate::framebuffer::{Attributes, Framebuffer, INDEXED_COLORS_COUNT, IndexedColor};
 use crate::hash::*;
@@ -345,7 +347,7 @@ pub struct Tui {
     /// Gets reset when the mouse was released for a while.
     mouse_click_counter: CoordType,
     /// The path to the node that was clicked on.
-    mouse_down_node_path: Vec<u64>,
+    mouse_down_node_path: MeVec<u64>,
     /// The position of the first click in a double/triple click series.
     first_click_position: Point,
     /// The node ID of the node that was first clicked on
@@ -353,14 +355,14 @@ pub struct Tui {
     first_click_target: u64,
 
     /// Path to the currently focused node.
-    focused_node_path: Vec<u64>,
+    focused_node_path: MeVec<u64>,
     /// Contains the last element in [`Tui::focused_node_path`].
     /// This way we can track if the focus changed, because then we
     /// need to scroll the node into view if it's within a scrollarea.
     focused_node_for_scrolling: u64,
 
     /// A list of cached text buffers used for [`Context::editline()`].
-    cached_text_buffers: Vec<CachedTextBuffer>,
+    cached_text_buffers: MeVec<CachedTextBuffer>,
 
     /// The clipboard contents.
     clipboard: Clipboard,
@@ -404,14 +406,14 @@ impl Tui {
             mouse_state: InputMouseState::None,
             mouse_is_drag: false,
             mouse_click_counter: 0,
-            mouse_down_node_path: Vec::with_capacity(16),
+            mouse_down_node_path: MeVec::with_capacity(16),
             first_click_position: Point::MIN,
             first_click_target: 0,
 
-            focused_node_path: Vec::with_capacity(16),
+            focused_node_path: MeVec::with_capacity(16),
             focused_node_for_scrolling: ROOT_ID,
 
-            cached_text_buffers: Vec::with_capacity(16),
+            cached_text_buffers: MeVec::with_capacity(16),
 
             clipboard: Default::default(),
 
@@ -804,7 +806,7 @@ impl Tui {
         }
     }
 
-    fn build_node_path(node: Option<&NodeCell>, path: &mut Vec<u64>) {
+    fn build_node_path(node: Option<&NodeCell>, path: &mut MeVec<u64>) {
         path.clear();
         if let Some(mut node) = node {
             loop {
@@ -821,7 +823,7 @@ impl Tui {
         }
     }
 
-    fn clean_node_path(path: &mut Vec<u64>) {
+    fn clean_node_path(path: &mut MeVec<u64>) {
         Self::build_node_path(None, path);
     }
 
@@ -1122,7 +1124,7 @@ impl Tui {
         let mut result = ArenaString::new_in(arena);
         result.push_str("general:\r\n- focus_path:\r\n");
 
-        for &id in &self.focused_node_path {
+        for &id in self.focused_node_path.iter() {
             _ = write!(result, "  - {id:016x}\r\n");
         }
 
@@ -2064,7 +2066,7 @@ impl<'a> Context<'a, '_> {
         let buffer = {
             let buffers = &mut self.tui.cached_text_buffers;
 
-            let cached = match buffers.iter_mut().find(|t| t.node_id == node.id) {
+            let cached = match buffers.deref_mut().iter_mut().find(|t| t.node_id == node.id) {
                 Some(cached) => {
                     if let TextBufferPayload::Textarea(tb) = &payload {
                         cached.editor = tb.clone();
@@ -2081,8 +2083,7 @@ impl<'a> Context<'a, '_> {
                             TextBufferPayload::Textarea(tb) => tb.clone(),
                         },
                         seen: true,
-                    });
-                    buffers.last_mut().unwrap()
+                    })
                 }
             };
 

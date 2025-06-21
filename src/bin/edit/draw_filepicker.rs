@@ -3,9 +3,11 @@
 
 use std::cmp::Ordering;
 use std::fs;
+use std::ops::Deref;
 use std::path::{Path, PathBuf};
 
 use edit::arena::scratch_arena;
+use edit::collections::*;
 use edit::framebuffer::IndexedColor;
 use edit::helpers::*;
 use edit::input::{kbmod, vk};
@@ -153,7 +155,7 @@ pub fn draw_file_picker(ctx: &mut Context, state: &mut State) {
             ctx.inherit_focus();
 
             for entries in state.file_picker_entries.as_ref().unwrap() {
-                for entry in entries {
+                for entry in entries.deref() {
                     match ctx.list_item(false, entry.as_str()) {
                         ListSelection::Unchanged => {}
                         ListSelection::Selected => {
@@ -304,7 +306,7 @@ fn draw_file_picker_update_path(state: &mut State) -> Option<PathBuf> {
 fn draw_dialog_saveas_refresh_files(state: &mut State) {
     let dir = state.file_picker_pending_dir.as_path();
     // ["..", directories, files]
-    let mut dirs_files = [Vec::new(), Vec::new(), Vec::new()];
+    let mut dirs_files = [MeVec::new(), MeVec::new(), MeVec::new()];
 
     #[cfg(windows)]
     if dir.as_os_str().is_empty() {
@@ -368,7 +370,7 @@ fn update_autocomplete_suggestions(state: &mut State) {
 
     let scratch = scratch_arena(None);
     let needle = state.file_picker_pending_name.as_os_str().as_encoded_bytes();
-    let mut matches = Vec::new();
+    let mut matches = MeVec::new();
 
     // Using binary search below we'll quickly find the lower bound
     // of items that match the needle (= share a common prefix).

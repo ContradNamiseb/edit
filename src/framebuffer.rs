@@ -10,6 +10,7 @@ use std::ptr;
 use std::slice::ChunksExact;
 
 use crate::arena::{Arena, ArenaString};
+use crate::collections::*;
 use crate::helpers::{CoordType, Point, Rect, Size};
 use crate::oklab::{oklab_blend, srgb_to_oklab};
 use crate::simd::{MemsetSafe, memset};
@@ -583,18 +584,18 @@ struct Buffer {
 /// A buffer for the text contents of the framebuffer.
 #[derive(Default)]
 struct LineBuffer {
-    lines: Vec<String>,
+    lines: MeVec<String>,
     size: Size,
 }
 
 impl LineBuffer {
     fn new(size: Size) -> Self {
-        Self { lines: vec![String::new(); size.height as usize], size }
+        Self { lines: MeVec::new_repeated(String::new(), size.height as usize), size }
     }
 
     fn fill_whitespace(&mut self) {
         let width = self.size.width as usize;
-        for l in &mut self.lines {
+        for l in self.lines.iter_mut() {
             l.clear();
             l.reserve(width + width / 2);
 
@@ -730,13 +731,13 @@ impl LineBuffer {
 /// An sRGB bitmap.
 #[derive(Default)]
 struct Bitmap {
-    data: Vec<u32>,
+    data: MeVec<u32>,
     size: Size,
 }
 
 impl Bitmap {
     fn new(size: Size) -> Self {
-        Self { data: vec![0; (size.width * size.height) as usize], size }
+        Self { data: MeVec::new_repeated(0, (size.width * size.height) as usize), size }
     }
 
     fn fill(&mut self, color: u32) {
@@ -840,13 +841,16 @@ impl BitXor for Attributes {
 /// Stores VT attributes for the framebuffer.
 #[derive(Default)]
 struct AttributeBuffer {
-    data: Vec<Attributes>,
+    data: MeVec<Attributes>,
     size: Size,
 }
 
 impl AttributeBuffer {
     fn new(size: Size) -> Self {
-        Self { data: vec![Default::default(); (size.width * size.height) as usize], size }
+        Self {
+            data: MeVec::new_repeated(Default::default(), (size.width * size.height) as usize),
+            size,
+        }
     }
 
     fn reset(&mut self) {

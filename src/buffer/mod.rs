@@ -39,6 +39,7 @@ pub use gap_buffer::GapBuffer;
 use crate::arena::{Arena, ArenaString, scratch_arena};
 use crate::cell::SemiRefCell;
 use crate::clipboard::Clipboard;
+use crate::collections::*;
 use crate::document::{ReadableDocument, WriteableDocument};
 use crate::framebuffer::{Framebuffer, IndexedColor};
 use crate::helpers::*;
@@ -102,9 +103,9 @@ struct HistoryEntry {
     /// The position is at the start of the changed range.
     cursor: Point,
     /// Text that was deleted from the buffer.
-    deleted: Vec<u8>,
+    deleted: MeVec<u8>,
     /// Text that was added to the buffer.
-    added: Vec<u8>,
+    added: MeVec<u8>,
 }
 
 /// Caches an ICU search operation.
@@ -1364,11 +1365,11 @@ impl TextBuffer {
         search: &mut ActiveSearch,
         replacement: &'a [u8],
         parsed_replacements: &[RegexReplacement],
-    ) -> Cow<'a, [u8]> {
+    ) -> MeMaybeOwned<'a, [u8], MeVec<u8>> {
         if !search.options.use_regex {
-            Cow::Borrowed(replacement)
+            MeMaybeOwned::Borrowed(replacement)
         } else {
-            let mut res = Vec::new();
+            let mut res = MeVec::new();
 
             for replacement in parsed_replacements {
                 match replacement {
@@ -1381,7 +1382,7 @@ impl TextBuffer {
                 }
             }
 
-            Cow::Owned(res)
+            MeMaybeOwned::Owned(res)
         }
     }
 
@@ -2432,13 +2433,13 @@ impl TextBuffer {
 
     /// Extracts the contents of the current selection.
     /// May optionally delete it, if requested. This is meant to be used for Ctrl+X.
-    fn extract_selection(&mut self, delete: bool) -> Vec<u8> {
+    fn extract_selection(&mut self, delete: bool) -> MeVec<u8> {
         let line_copy = !self.has_selection();
         let Some((beg, end)) = self.selection_range_internal(true) else {
-            return Vec::new();
+            return Default::default();
         };
 
-        let mut out = Vec::new();
+        let mut out = Default::default();
         self.buffer.extract_raw(beg.offset..end.offset, &mut out, 0);
 
         if delete && !out.is_empty() {
@@ -2459,7 +2460,7 @@ impl TextBuffer {
     /// Extracts the contents of the current selection the user made.
     /// This differs from [`TextBuffer::extract_selection()`] in that
     /// it does nothing if the selection was made by searching.
-    pub fn extract_user_selection(&mut self, delete: bool) -> Option<Vec<u8>> {
+    pub fn extract_user_selection(&mut self, delete: bool) -> Option<MeVec<u8>> {
         if !self.has_selection() {
             return None;
         }
@@ -2542,8 +2543,8 @@ impl TextBuffer {
                 stats_before: self.stats,
                 generation_before: self.buffer.generation(),
                 cursor: cursor.logical_pos,
-                deleted: Vec::new(),
-                added: Vec::new(),
+                deleted: Default::default(),
+                added: Default::default(),
             }));
 
             if let Some(info) = &self.active_edit_group

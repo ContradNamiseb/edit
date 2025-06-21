@@ -1,6 +1,7 @@
 use std::ops::Range;
 
-use crate::{document::ReadableDocument, simd::memchr2};
+use crate::document::ReadableDocument;
+use crate::simd::memchr2;
 
 /// Cache a line/offset pair every CACHE_EVERY lines to speed up line/offset calculations
 const CACHE_EVERY: usize = 1024 * 64;
@@ -13,7 +14,7 @@ pub struct CachePoint {
 }
 
 pub struct LineCache {
-    cache: Vec<CachePoint>,
+    cache: MeVec<CachePoint>,
 }
 
 impl LineCache {
@@ -28,15 +29,19 @@ impl LineCache {
         let mut line = 0;
         loop {
             let text = document.read_forward(offset);
-            if text.is_empty() { return; }
-            
+            if text.is_empty() {
+                return;
+            }
+
             let mut off = 0;
             loop {
                 off = memchr2(b'\n', b'\n', text, off);
-                if off == text.len() { break; }
+                if off == text.len() {
+                    break;
+                }
 
                 if line % CACHE_EVERY == 0 {
-                    self.cache.push(CachePoint { index: offset+off, line });
+                    self.cache.push(CachePoint { index: offset + off, line });
                 }
                 line += 1;
                 off += 1;
@@ -48,7 +53,7 @@ impl LineCache {
 
     /// Updates the cache after a deletion.
     /// `range` is the deleted byte range, and `text` is the content that was deleted.
-    pub fn delete(&mut self, range: Range<usize>, text: &Vec<u8>) {
+    pub fn delete(&mut self, range: Range<usize>, text: &MeVec<u8>) {
         let mut newlines = 0;
         for c in text {
             if *c == b'\n' {
@@ -62,10 +67,11 @@ impl LineCache {
             if point.index >= range.start {
                 if point.index < range.end {
                     // cache point is within the deleted range
-                    if beg_del.is_none() { beg_del = Some(i); }
+                    if beg_del.is_none() {
+                        beg_del = Some(i);
+                    }
                     end_del = Some(i + 1);
-                }
-                else {
+                } else {
                     point.index -= text.len();
                     point.line -= newlines;
                 }
@@ -106,9 +112,12 @@ impl LineCache {
         match self.cache.binary_search_by_key(&target_count, |p| p.line) {
             Ok(i) => Some(self.cache[i].clone()),
             Err(i) => {
-                if i == 0 || i == self.cache.len() { None }  // target < lowest cache point || target > highest cache point
+                if i == 0 || i == self.cache.len() {
+                    None
+                }
+                // target < lowest cache point || target > highest cache point
                 else {
-                    Some(self.cache[ if reverse {i} else {i-1} ].clone())
+                    Some(self.cache[if reverse { i } else { i - 1 }].clone())
                 }
             }
         }

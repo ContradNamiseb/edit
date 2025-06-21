@@ -179,13 +179,13 @@ impl BitPacking {
 #[derive(Default)]
 struct Ucd {
     description: String,
-    values: Vec<TrieType>,
+    values: MeVec<TrieType>,
     packing: BitPacking,
 }
 
 #[derive(Clone, Default)]
 struct Stage {
-    values: Vec<u32>,
+    values: MeVec<u32>,
     index: usize,
     shift: usize,
     mask: usize,
@@ -194,7 +194,7 @@ struct Stage {
 
 #[derive(Clone, Default)]
 struct Trie {
-    stages: Vec<Stage>,
+    stages: MeVec<Stage>,
     total_size: usize,
 }
 
@@ -214,8 +214,8 @@ struct Output {
 
     ucd: Ucd,
     trie: Trie,
-    rules_gc: Vec<Vec<u32>>,
-    rules_lb: Vec<u32>,
+    rules_gc: MeVec<MeVec<u32>>,
+    rules_lb: MeVec<u32>,
     total_size: usize,
 }
 
@@ -997,7 +997,7 @@ fn build_best_trie(
     let delta = max_shift - min_shift + 1;
     let total = delta.pow(depth as u32);
 
-    let mut tasks = Vec::new();
+    let mut tasks = Default::default();
     for i in 0..total {
         let mut shifts = vec![0; depth];
         let mut index = i;
@@ -1015,17 +1015,17 @@ fn build_best_trie(
         .unwrap()
 }
 
-fn build_trie(uncompressed: Vec<TrieType>, shifts: &[usize]) -> Trie {
+fn build_trie(uncompressed: MeVec<TrieType>, shifts: &[usize]) -> Trie {
     // Fun fact: Rust optimizes the into_iter/collect into a no-op. Neat!
-    let mut uncompressed: Vec<u32> = uncompressed.into_iter().map(|c| c.value()).collect();
+    let mut uncompressed: MeVec<u32> = uncompressed.into_iter().map(|c| c.value()).collect();
     let mut cumulative_shift = 0;
-    let mut stages = Vec::new();
+    let mut stages = Default::default();
 
     for (stage, &shift) in shifts.iter().enumerate() {
         let chunk_size = 1 << shift;
         let mut cache = HashMap::new();
-        let mut compressed = Vec::new();
-        let mut offsets = Vec::new();
+        let mut compressed = Default::default();
+        let mut offsets = Default::default();
         let mut off = 0;
 
         while off < uncompressed.len() {

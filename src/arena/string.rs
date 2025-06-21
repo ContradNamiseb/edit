@@ -81,7 +81,7 @@ impl<'a> ArenaString<'a> {
         Err(res)
     }
 
-    /// Turns a [`Vec<u8>`] into an [`ArenaString`], replacing invalid UTF-8 sequences with U+FFFD.
+    /// Turns a [`MeVec<u8>`] into an [`ArenaString`], replacing invalid UTF-8 sequences with U+FFFD.
     #[must_use]
     pub fn from_utf8_lossy_owned(v: Vec<u8, &'a Arena>) -> Self {
         match Self::from_utf8_lossy(v.allocator(), &v) {

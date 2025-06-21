@@ -5,6 +5,7 @@ use std::ops::Range;
 use std::ptr::{self, NonNull};
 use std::slice;
 
+use crate::collections::*;
 use crate::document::{ReadableDocument, WriteableDocument};
 use crate::helpers::*;
 use crate::{apperr, sys};
@@ -24,7 +25,7 @@ const SMALL_GAP_CHUNK: usize = 16;
 // tui.rs could also just keep a MRU set of large buffers around.
 enum BackingBuffer {
     VirtualMemory(NonNull<u8>, usize),
-    Vec(Vec<u8>),
+    Vec(MeVec<u8>),
 }
 
 impl Drop for BackingBuffer {
@@ -37,7 +38,7 @@ impl Drop for BackingBuffer {
     }
 }
 
-/// Most people know how `Vec<T>` works: It has some spare capacity at the end,
+/// Most people know how `MeVec<T>` works: It has some spare capacity at the end,
 /// so that pushing into it doesn't reallocate every single time. A gap buffer
 /// is the same thing, but the spare capacity can be anywhere in the buffer.
 /// This variant is optimized for large buffers and uses virtual memory.
@@ -70,7 +71,7 @@ impl GapBuffer {
         if small {
             reserve = SMALL_CAPACITY;
             text = NonNull::dangling();
-            buffer = BackingBuffer::Vec(Vec::new());
+            buffer = BackingBuffer::Vec(Default::default());
         } else {
             reserve = LARGE_CAPACITY;
             text = unsafe { sys::virtual_reserve(reserve)? };
@@ -245,7 +246,7 @@ impl GapBuffer {
         self.text_length = 0;
     }
 
-    pub fn extract_raw(&self, range: Range<usize>, out: &mut Vec<u8>, mut out_off: usize) {
+    pub fn extract_raw(&self, range: Range<usize>, out: &mut MeVec<u8>, mut out_off: usize) {
         let end = range.end.min(self.text_length);
         let mut beg = range.start.min(end);
         out_off = out_off.min(out.len());

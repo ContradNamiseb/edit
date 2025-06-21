@@ -2,6 +2,7 @@
 // Licensed under the MIT License.
 
 use edit::arena::scratch_arena;
+use edit::collections::*;
 use edit::framebuffer::{Attributes, IndexedColor};
 use edit::fuzzy::score_fuzzy;
 use edit::helpers::*;
@@ -302,7 +303,7 @@ fn encoding_picker_update_list(state: &mut State) {
     }
 
     matches.sort_by(|a, b| b.0.cmp(&a.0));
-    state.encoding_picker_results = Some(Vec::from_iter(matches.iter().map(|(_, enc)| *enc)));
+    state.encoding_picker_results = Some(MeVec::from_iter(matches.iter().map(|(_, enc)| *enc)));
 }
 
 pub fn draw_go_to_file(ctx: &mut Context, state: &mut State) {
