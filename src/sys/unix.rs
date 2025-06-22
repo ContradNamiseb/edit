@@ -192,7 +192,7 @@ pub fn read_stdin(arena: &Arena, mut timeout: time::Duration) -> Option<ArenaStr
         }
 
         let read_poll = timeout != time::Duration::MAX;
-        let mut buf = Vec::new_in(arena);
+        let mut buf = MeVec::new_in(arena);
 
         // We don't know if the input is valid UTF8, so we first use a Vec and then
         // later turn it into UTF8 using `from_utf8_lossy_owned`.
@@ -586,7 +586,7 @@ where
 }
 
 pub fn preferred_languages(arena: &Arena) -> MeVec<ArenaString<'_>, &Arena> {
-    let mut locales = Vec::new_in(arena);
+    let mut locales = MeVec::new_in(arena);
 
     for key in ["LANGUAGE", "LC_ALL", "LANG"] {
         if let Ok(val) = std::env::var(key)
@@ -595,7 +595,7 @@ pub fn preferred_languages(arena: &Arena) -> MeVec<ArenaString<'_>, &Arena> {
             locales.extend(val.split(':').filter(|s| !s.is_empty()).map(|s| {
                 // Replace all underscores with dashes,
                 // because the localization code expects pt-br, not pt_BR.
-                let mut res = Vec::new_in(arena);
+                let mut res = MeVec::new_in(arena);
                 res.extend(s.as_bytes().iter().map(|&b| if b == b'_' { b'-' } else { b }));
                 unsafe { ArenaString::from_utf8_unchecked(res) }
             }));

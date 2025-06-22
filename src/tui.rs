@@ -1764,7 +1764,7 @@ impl<'a> Context<'a, '_> {
 
         let mut last_node = self.tree.last_node.borrow_mut();
         last_node.content = NodeContent::Table(TableContent {
-            columns: Vec::new_in(self.arena()),
+            columns: MeVec::new_in(self.arena()),
             cell_gap: Default::default(),
         });
     }
@@ -1923,7 +1923,7 @@ impl<'a> Context<'a, '_> {
         self.block_begin(classname);
         self.tree.last_node.borrow_mut().content = NodeContent::Text(TextContent {
             text: ArenaString::new_in(self.arena()),
-            chunks: Vec::with_capacity_in(4, self.arena()),
+            chunks: MeVec::with_capacity_in(4, self.arena()),
             overflow: Overflow::Clip,
         });
     }
@@ -3635,7 +3635,7 @@ struct ListContent<'a> {
 
 /// NOTE: Must not contain items that require drop().
 struct TableContent<'a> {
-    columns: Vec<CoordType, &'a Arena>,
+    columns: MeVec<CoordType, &'a Arena>,
     cell_gap: Size,
 }
 
@@ -3652,7 +3652,7 @@ const INVALID_STYLED_TEXT_CHUNK: StyledTextChunk =
 /// NOTE: Must not contain items that require drop().
 struct TextContent<'a> {
     text: ArenaString<'a>,
-    chunks: Vec<StyledTextChunk, &'a Arena>,
+    chunks: MeVec<StyledTextChunk, &'a Arena>,
     overflow: Overflow,
 }
 

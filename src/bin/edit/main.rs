@@ -229,7 +229,7 @@ fn run() -> apperr::Result<()> {
 // Returns true if the application should exit early.
 fn handle_args(state: &mut State) -> apperr::Result<bool> {
     let scratch = scratch_arena(None);
-    let mut paths: Vec<PathBuf, &Arena> = Vec::new_in(&*scratch);
+    let mut paths: MeVec<PathBuf, &Arena> = MeVec::new_in(&*scratch);
     let mut cwd = env::current_dir()?;
 
     // The best CLI argument parser in the world.

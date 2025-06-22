@@ -675,7 +675,7 @@ impl LineBuffer {
         let total_add = src.len() + overlap_beg + overlap_end;
         let total_del = res_old_end.offset - res_old_beg.offset;
 
-        // This is basically a hand-written version of `Vec::splice()`,
+        // This is basically a hand-written version of `MeVec::splice()`,
         // but for strings under the assumption that all inputs are valid.
         // It also takes care of `overlap_beg` and `overlap_end` by inserting spaces.
         unsafe {

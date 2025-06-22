@@ -145,7 +145,7 @@ pub struct SearchOptions {
 
 enum RegexReplacement<'a> {
     Group(i32),
-    Text(Vec<u8, &'a Arena>),
+    Text(MeVec<u8, &'a Arena>),
 }
 
 /// Caches the start and length of the active edit line for a single edit.
@@ -1266,15 +1266,15 @@ impl TextBuffer {
         arena: &'a Arena,
         search: &mut ActiveSearch,
         replacement: &[u8],
-    ) -> Vec<RegexReplacement<'a>, &'a Arena> {
-        let mut res = Vec::new_in(arena);
+    ) -> MeVec<RegexReplacement<'a>, &'a Arena> {
+        let mut res = MeVec::new_in(arena);
 
         if !search.options.use_regex {
             return res;
         }
 
         let group_count = search.regex.group_count();
-        let mut text = Vec::new_in(arena);
+        let mut text = MeVec::new_in(arena);
         let mut text_beg = 0;
 
         loop {
@@ -1345,7 +1345,7 @@ impl TextBuffer {
 
             if !text.is_empty() {
                 res.push(RegexReplacement::Text(text));
-                text = Vec::new_in(arena);
+                text = MeVec::new_in(arena);
             }
             if group >= 0 {
                 res.push(RegexReplacement::Group(group));

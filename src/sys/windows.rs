@@ -18,6 +18,7 @@ use windows_sys::w;
 
 use crate::apperr;
 use crate::arena::{Arena, ArenaString, scratch_arena};
+use crate::collections::*;
 use crate::helpers::*;
 
 macro_rules! w_env {
@@ -643,13 +644,13 @@ pub fn load_icu() -> apperr::Result<LibIcu> {
 }
 
 /// Returns a list of preferred languages for the current user.
-pub fn preferred_languages(arena: &Arena) -> Vec<ArenaString<'_>, &Arena> {
+pub fn preferred_languages(arena: &Arena) -> MeVec<ArenaString<'_>, &Arena> {
     // If the GetUserPreferredUILanguages() don't fit into 512 characters,
     // honestly, just give up. How many languages do you realistically need?
     const LEN: usize = 512;
 
     let scratch = scratch_arena(Some(arena));
-    let mut res = Vec::new_in(arena);
+    let mut res = MeVec::new_in(arena);
 
     // Get the list of preferred languages via `GetUserPreferredUILanguages`.
     let langs = unsafe {

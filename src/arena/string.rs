@@ -5,6 +5,7 @@ use std::fmt;
 use std::ops::{Bound, Deref, DerefMut, RangeBounds};
 
 use super::Arena;
+use crate::collections::*;
 use crate::helpers::*;
 
 /// A custom string type, because `std` lacks allocator support for [`String`].
@@ -12,19 +13,19 @@ use crate::helpers::*;
 /// To keep things simple, this one is hardcoded to [`Arena`].
 #[derive(Clone)]
 pub struct ArenaString<'a> {
-    vec: Vec<u8, &'a Arena>,
+    vec: MeVec<u8, &'a Arena>,
 }
 
 impl<'a> ArenaString<'a> {
     /// Creates a new [`ArenaString`] in the given arena.
     #[must_use]
     pub const fn new_in(arena: &'a Arena) -> Self {
-        Self { vec: Vec::new_in(arena) }
+        Self { vec: MeVec::new_in(arena) }
     }
 
     #[must_use]
     pub fn with_capacity_in(capacity: usize, arena: &'a Arena) -> Self {
-        Self { vec: Vec::with_capacity_in(capacity, arena) }
+        Self { vec: MeVec::with_capacity_in(capacity, arena) }
     }
 
     /// Turns a [`str`] into an [`ArenaString`].
@@ -43,7 +44,7 @@ impl<'a> ArenaString<'a> {
     /// You fool! It says "unchecked" right there. Now the house is burning.
     #[inline]
     #[must_use]
-    pub unsafe fn from_utf8_unchecked(bytes: Vec<u8, &'a Arena>) -> Self {
+    pub unsafe fn from_utf8_unchecked(bytes: MeVec<u8, &'a Arena>) -> Self {
         Self { vec: bytes }
     }
 
@@ -83,7 +84,7 @@ impl<'a> ArenaString<'a> {
 
     /// Turns a [`MeVec<u8>`] into an [`ArenaString`], replacing invalid UTF-8 sequences with U+FFFD.
     #[must_use]
-    pub fn from_utf8_lossy_owned(v: Vec<u8, &'a Arena>) -> Self {
+    pub fn from_utf8_lossy_owned(v: MeVec<u8, &'a Arena>) -> Self {
         match Self::from_utf8_lossy(v.allocator(), &v) {
             Ok(..) => unsafe { Self::from_utf8_unchecked(v) },
             Err(s) => s,
@@ -125,7 +126,7 @@ impl<'a> ArenaString<'a> {
     /// # Safety
     ///
     /// The underlying `&mut Vec` allows writing bytes which are not valid UTF-8.
-    pub unsafe fn as_mut_vec(&mut self) -> &mut Vec<u8, &'a Arena> {
+    pub unsafe fn as_mut_vec(&mut self) -> &mut MeVec<u8, &'a Arena> {
         &mut self.vec
     }
 
@@ -162,7 +163,7 @@ impl<'a> ArenaString<'a> {
     #[inline]
     pub fn push(&mut self, ch: char) {
         match ch.len_utf8() {
-            1 => self.vec.push(ch as u8),
+            1 => _ = self.vec.push(ch as u8),
             _ => self.vec.extend_from_slice(ch.encode_utf8(&mut [0; 4]).as_bytes()),
         }
     }

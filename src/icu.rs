@@ -12,6 +12,7 @@ use std::ptr::{null, null_mut};
 
 use crate::arena::{Arena, ArenaString, scratch_arena};
 use crate::buffer::TextBuffer;
+use crate::collections::*;
 use crate::unicode::Utf8Chars;
 use crate::{apperr, arena_format, sys};
 
@@ -35,8 +36,8 @@ pub fn get_available_encodings() -> &'static Encodings {
     unsafe {
         if ENCODINGS.all.is_empty() {
             let scratch = scratch_arena(None);
-            let mut preferred = Vec::new_in(&*scratch);
-            let mut alternative = Vec::new_in(&*scratch);
+            let mut preferred = MeVec::new_in(&*scratch);
+            let mut alternative = MeVec::new_in(&*scratch);
 
             // These encodings are always available.
             preferred.push(Encoding { label: "UTF-8", canonical: "UTF-8" });
@@ -78,7 +79,7 @@ pub fn get_available_encodings() -> &'static Encodings {
             let preferred_len = preferred.len();
 
             // Combine the preferred and alternative encodings into a single list.
-            let mut all = Vec::with_capacity(preferred.len() + alternative.len());
+            let mut all = MeVec::with_capacity(preferred.len() + alternative.len());
             all.extend(preferred);
             all.extend(alternative);
 
@@ -625,7 +626,7 @@ impl Regex {
         let f = init_if_needed()?;
         unsafe {
             let scratch = scratch_arena(None);
-            let mut utf16 = Vec::new_in(&*scratch);
+            let mut utf16 = MeVec::new_in(&*scratch);
             let mut status = icu_ffi::U_ZERO_ERROR;
 
             utf16.extend(pattern.encode_utf16());
@@ -831,7 +832,7 @@ pub fn fold_case<'a>(arena: &'a Arena, input: &str) -> ArenaString<'a> {
     if !casemap.is_null() {
         let f = assume_loaded();
         let mut status = icu_ffi::U_ZERO_ERROR;
-        let mut output = Vec::new_in(arena);
+        let mut output = MeVec::new_in(arena);
         let mut output_len;
 
         // First, guess the output length:

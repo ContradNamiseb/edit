@@ -291,7 +291,7 @@ fn encoding_picker_update_list(state: &mut State) {
 
     let encodings = icu::get_available_encodings();
     let scratch = scratch_arena(None);
-    let mut matches = Vec::new_in(&*scratch);
+    let mut matches = MeVec::new_in(&*scratch);
 
     for enc in encodings.all {
         let local_scratch = scratch_arena(Some(&scratch));

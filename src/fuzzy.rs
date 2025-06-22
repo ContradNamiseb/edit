@@ -8,6 +8,7 @@
 use std::vec;
 
 use crate::arena::{Arena, scratch_arena};
+use crate::collections::*;
 use crate::icu;
 
 const NO_MATCH: i32 = 0;
@@ -17,10 +18,10 @@ pub fn score_fuzzy<'a>(
     haystack: &str,
     needle: &str,
     allow_non_contiguous_matches: bool,
-) -> (i32, Vec<usize, &'a Arena>) {
+) -> (i32, MeVec<usize, &'a Arena>) {
     if haystack.is_empty() || needle.is_empty() {
         // return early if target or query are empty
-        return (NO_MATCH, Vec::new_in(arena));
+        return (NO_MATCH, MeVec::new_in(arena));
     }
 
     let scratch = scratch_arena(Some(arena));
@@ -29,7 +30,7 @@ pub fn score_fuzzy<'a>(
 
     if target.len() < query.len() {
         // impossible for query to be contained in target
-        return (NO_MATCH, Vec::new_in(arena));
+        return (NO_MATCH, MeVec::new_in(arena));
     }
 
     let target_lower = icu::fold_case(&scratch, haystack);
@@ -121,7 +122,7 @@ pub fn score_fuzzy<'a>(
     }
 
     // Restore Positions (starting from bottom right of matrix)
-    let mut positions = Vec::new_in(arena);
+    let mut positions = MeVec::new_in(arena);
 
     if !query.is_empty() && !target.is_empty() {
         let mut query_index = query.len() - 1;
@@ -213,8 +214,8 @@ fn score_separator_at_pos(ch: char) -> i32 {
     }
 }
 
-fn map_chars<'a>(arena: &'a Arena, s: &str) -> Vec<char, &'a Arena> {
-    let mut chars = Vec::with_capacity_in(s.len(), arena);
+fn map_chars<'a>(arena: &'a Arena, s: &str) -> MeVec<char, &'a Arena> {
+    let mut chars = MeVec::with_capacity_in(s.len(), arena);
     chars.extend(s.chars());
     chars.shrink_to_fit();
     chars

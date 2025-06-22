@@ -378,7 +378,7 @@ fn update_autocomplete_suggestions(state: &mut State) {
     // The problem is finding the upper bound. Here I'm using a trick:
     // By appending U+10FFFF (the highest possible Unicode code point)
     // we create a needle that naturally yields an upper bound.
-    let mut needle_upper_bound = Vec::with_capacity_in(needle.len() + 4, &*scratch);
+    let mut needle_upper_bound = MeVec::with_capacity_in(needle.len() + 4, &*scratch);
     needle_upper_bound.extend_from_slice(needle);
     needle_upper_bound.extend_from_slice(b"\xf4\x8f\xbf\xbf");
 
