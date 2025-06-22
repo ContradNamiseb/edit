@@ -1941,7 +1941,7 @@ impl TextBuffer {
                     global_off += chunk.len();
                 }
 
-                while highlighter.logical_pos_y() < cursor.logical_pos.y {
+                while highlighter.logical_pos_y() < cursor_beg.logical_pos.y - 1 {
                     let scratch_alt = scratch_arena(Some(&scratch));
                     _ = highlighter.parse_next_line(&scratch_alt);
                 }
@@ -1953,7 +1953,7 @@ impl TextBuffer {
                         HighlightKind::Comment => IndexedColor::Green,
                         HighlightKind::Number => IndexedColor::BrightGreen,
                         HighlightKind::String => IndexedColor::BrightRed,
-                        HighlightKind::Variable => IndexedColor::BrightCyan,
+                        HighlightKind::Variable => IndexedColor::BrightBlue,
                         HighlightKind::Operator => IndexedColor::White,
                         HighlightKind::Keyword => IndexedColor::BrightMagenta,
                         HighlightKind::Method => IndexedColor::BrightYellow,
