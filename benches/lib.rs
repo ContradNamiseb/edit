@@ -3,9 +3,11 @@
 
 use std::hint::black_box;
 use std::io::Cursor;
+use std::ops::Deref;
 use std::{mem, vec};
 
 use criterion::{BenchmarkId, Criterion, Throughput, criterion_group, criterion_main};
+use edit::collections::*;
 use edit::helpers::*;
 use edit::simd::MemsetSafe;
 use edit::{arena, buffer, hash, oklab, simd, unicode};
@@ -86,9 +88,9 @@ fn bench_buffer(c: &mut Criterion) {
     // Sanity check: If this fails, the implementation is incorrect.
     {
         let buf = bench_gap_buffer();
-        let mut actual = Vec::new();
+        let mut actual = MeVec::new();
         buf.extract_raw(0..usize::MAX, &mut actual, 0);
-        assert_eq!(actual, data.end_content.as_bytes());
+        assert_eq!(actual.deref(), data.end_content.as_bytes());
     }
     {
         let mut tb = bench_text_buffer();
